@@ -1,10 +1,10 @@
 import os
 import logging
-import asyncio
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from dotenv import load_dotenv
+import asyncio
 from threading import Thread
 
 # Load environment variables
@@ -20,7 +20,6 @@ app = Flask(__name__)
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Public Render URL
 
-# Check if required environment variables are set
 if not TOKEN:
     raise ValueError("TELEGRAM_TOKEN is not set in environment variables")
 if not WEBHOOK_URL:
@@ -38,7 +37,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Received /help command from {update.effective_user}")
     await update.message.reply_text("Available commands:\n/start - Start bot\n/help - Show help")
 
-# Add command handlers to the bot
+# Add command handlers
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("help", help_command))
 
@@ -52,22 +51,17 @@ def home():
 async def webhook():
     """Handle incoming Telegram updates asynchronously."""
     try:
-        # Log the incoming request payload
         incoming_data = request.get_json(force=True)
         logging.info(f"Incoming update: {incoming_data}")
-
-        # Process the incoming update
         update = Update.de_json(incoming_data, application.bot)
         await application.process_update(update)
-
         return "OK", 200
     except Exception as e:
-        # Log the exception with detailed traceback
         logging.error(f"Error processing webhook update: {e}", exc_info=True)
         return "Internal Server Error", 500
 
 async def setup_webhook():
-    """Set up Telegram webhook asynchronously."""
+    """Set up the Telegram webhook."""
     url = f"{WEBHOOK_URL}/{TOKEN}"
     try:
         await application.initialize()
@@ -75,7 +69,7 @@ async def setup_webhook():
         await application.bot.set_webhook(url)
         logging.info(f"Webhook set to {url}")
     except Exception as e:
-        logging.error(f"Failed to set webhook: {e}")
+        logging.error(f"Failed to set webhook: {e}", exc_info=True)
 
 def run_flask():
     """Run Flask server."""
@@ -84,14 +78,13 @@ def run_flask():
     app.run(host="0.0.0.0", port=port)
 
 def main():
-    """Run Flask and Telegram bot."""
-    # Start Flask in a separate thread
+    """Start the bot and Flask app."""
+    # Start the Flask server in a separate thread
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
 
-    # Use asyncio to set up webhook
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(setup_webhook())
+    # Set up the webhook asynchronously
+    asyncio.run(setup_webhook())
 
 if __name__ == "__main__":
     main()
