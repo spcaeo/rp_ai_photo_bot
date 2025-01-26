@@ -28,7 +28,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Received /help command from {update.effective_user}")
     await update.message.reply_text("Available commands:\n/start - Start bot\n/help - Show help")
 
-async def run_bot():
+async def bot_runner():
+    """Run the Telegram bot."""
     try:
         # Load Telegram token
         token = os.getenv('TELEGRAM_TOKEN')
@@ -54,25 +55,27 @@ async def run_bot():
     finally:
         await application.stop()
 
-def run_flask():
-    try:
-        # Run Flask app for Render
-        port = int(os.environ.get("PORT", 3000))
-        logging.info(f"Starting Flask server on port {port}")
-        app.run(host="0.0.0.0", port=port)
-    except Exception as e:
-        logging.error(f"Error in Flask server: {e}")
-
-def main():
-    # Use the existing event loop for Telegram bot
+def run_bot():
+    """Run the bot within the existing event loop."""
     loop = asyncio.get_event_loop()
+    loop.create_task(bot_runner())  # Schedule the bot_runner coroutine
 
-    # Start Flask server in a separate thread
+def run_flask():
+    """Run the Flask server."""
+    port = int(os.environ.get("PORT", 3000))
+    logging.info(f"Starting Flask server on port {port}")
+    app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    # Run Flask in a separate thread
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
 
-    # Run Telegram bot on the existing event loop
-    loop.run_until_complete(run_bot())
+    # Run the Telegram bot using the existing event loop
+    run_bot()
 
-if __name__ == "__main__":
-    main()
+    # Keep the main thread running
+    try:
+        asyncio.get_event_loop().run_forever()
+    except KeyboardInterrupt:
+        logging.info("Shutting down gracefully...")
