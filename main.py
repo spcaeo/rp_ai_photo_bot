@@ -1,6 +1,6 @@
 import os
-import asyncio
 import logging
+import asyncio
 from flask import Flask
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -63,10 +63,16 @@ def run_flask():
     except Exception as e:
         logging.error(f"Error in Flask server: {e}")
 
-if __name__ == "__main__":
-    # Run Flask and Telegram bot concurrently
+def main():
+    # Use the existing event loop for Telegram bot
+    loop = asyncio.get_event_loop()
+
+    # Start Flask server in a separate thread
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
 
-    # Run the Telegram bot
-    asyncio.run(run_bot())
+    # Run Telegram bot on the existing event loop
+    loop.run_until_complete(run_bot())
+
+if __name__ == "__main__":
+    main()
