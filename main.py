@@ -1,19 +1,16 @@
 import os
-from dotenv import load_dotenv
+from telegram.ext import Application, CommandHandler
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import ContextTypes
+from dotenv import load_dotenv
 
 load_dotenv()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Bot started!')
-
-def main():
-    token = os.getenv('TELEGRAM_TOKEN')
-    application = Application.builder().token(token).base_url("https://api.telegram.org/bot").build()
-    application.add_handler(CommandHandler("start", start))
-    print("Bot starting...")
-    application.run_polling(drop_pending_updates=True)
+    await update.message.reply_text("Hello! Bot is running.")
 
 if __name__ == '__main__':
-    main()
+    app = Application.builder().token(os.getenv('TELEGRAM_TOKEN')).build()
+    app.add_handler(CommandHandler("start", start))
+    print("Starting bot...")
+    app.run_polling(allowed_updates=[], drop_pending_updates=True)
