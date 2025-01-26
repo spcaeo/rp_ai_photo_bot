@@ -56,13 +56,18 @@ def webhook():
         incoming_data = request.get_json(force=True)
         logging.info(f"Incoming update: {incoming_data}")
 
-        # Process the update
+        # Initialize and start the application (if not already done)
+        if not application.is_running:
+            asyncio.run(application.initialize())
+            asyncio.run(application.start())
+
+        # Process the incoming update
         update = Update.de_json(incoming_data, application.bot)
         asyncio.run(application.process_update(update))
 
         return "OK", 200
     except Exception as e:
-        # Log the exception with detailed information
+        # Log the exception with detailed traceback
         logging.error(f"Error processing webhook update: {e}", exc_info=True)
         return "Internal Server Error", 500
 
