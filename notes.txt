@@ -3,3 +3,10 @@ python3 -m venv venv
 source venv/bin/activate
 
 [2025-01-26 17:45:48] Updated deployment script with timestamps
+
+[2025-01-26 17:46:37]
+Commit: 3072657
+Message: Added final deployment status check
+Deploy ID: dep-cub2f9t6l47c739u7cvg
+Final Status: canceled
+--------------------------------------------------
