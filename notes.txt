@@ -1,3 +1,5 @@
 python3 -m venv venv
 
 source venv/bin/activate
+
+[2025-01-26 17:45:48] Updated deployment script with timestamps
