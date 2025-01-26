@@ -50,7 +50,7 @@ def home():
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 async def webhook():
-    """Handle incoming Telegram updates."""
+    """Handle incoming Telegram updates asynchronously."""
     update = Update.de_json(request.get_json(force=True), application.bot)
     await application.process_update(update)
     return "OK", 200
