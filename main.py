@@ -53,12 +53,8 @@ async def bot_runner():
     except Exception as e:
         logging.error(f"Error in bot polling: {e}")
     finally:
-        await application.stop()
-
-def run_bot():
-    """Run the bot within the existing event loop."""
-    loop = asyncio.get_event_loop()
-    loop.create_task(bot_runner())  # Schedule the bot_runner coroutine
+        if "application" in locals():
+            await application.stop()
 
 def run_flask():
     """Run the Flask server."""
@@ -66,16 +62,15 @@ def run_flask():
     logging.info(f"Starting Flask server on port {port}")
     app.run(host="0.0.0.0", port=port)
 
-if __name__ == "__main__":
-    # Run Flask in a separate thread
+def main():
+    """Run Flask and Telegram bot."""
+    # Start Flask in a separate thread
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
 
-    # Run the Telegram bot using the existing event loop
-    run_bot()
+    # Use the existing event loop for Telegram bot
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(bot_runner())
 
-    # Keep the main thread running
-    try:
-        asyncio.get_event_loop().run_forever()
-    except KeyboardInterrupt:
-        logging.info("Shutting down gracefully...")
+if __name__ == "__main__":
+    main()
