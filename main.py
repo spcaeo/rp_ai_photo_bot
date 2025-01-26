@@ -1,22 +1,33 @@
 import os
 import logging
+import asyncio
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from dotenv import load_dotenv
+from threading import Thread
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
-app = Flask(__name__)
-
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Initialize Telegram bot
+# Flask app initialization
+app = Flask(__name__)
+
+# Environment variables
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Set your public Render URL here
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # Public Render URL
+
+# Check if required environment variables are set
+if not TOKEN:
+    raise ValueError("TELEGRAM_TOKEN is not set in environment variables")
+if not WEBHOOK_URL:
+    raise ValueError("WEBHOOK_URL is not set in environment variables")
+
+# Initialize Telegram bot
+application = Application.builder().token(TOKEN).build()
 
 # Command handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -27,13 +38,14 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Received /help command from {update.effective_user}")
     await update.message.reply_text("Available commands:\n/start - Start bot\n/help - Show help")
 
-# Initialize Telegram Application
-application = Application.builder().token(TOKEN).build()
+# Add command handlers to the bot
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("help", help_command))
 
+# Flask routes
 @app.route('/')
 def home():
+    """Health check endpoint."""
     return "Bot is running with webhooks!"
 
 @app.route(f"/{TOKEN}", methods=["POST"])
@@ -43,16 +55,30 @@ async def webhook():
     await application.process_update(update)
     return "OK", 200
 
-def setup_webhook():
-    """Set up Telegram webhook."""
+async def setup_webhook():
+    """Set up Telegram webhook asynchronously."""
     url = f"{WEBHOOK_URL}/{TOKEN}"
-    application.bot.set_webhook(url)
-    logging.info(f"Webhook set to {url}")
+    try:
+        await application.bot.set_webhook(url)
+        logging.info(f"Webhook set to {url}")
+    except Exception as e:
+        logging.error(f"Failed to set webhook: {e}")
+
+def run_flask():
+    """Run Flask server."""
+    port = int(os.environ.get("PORT", 3000))
+    logging.info(f"Starting Flask server on port {port}")
+    app.run(host="0.0.0.0", port=port)
+
+def main():
+    """Run Flask and Telegram bot."""
+    # Start Flask in a separate thread
+    flask_thread = Thread(target=run_flask)
+    flask_thread.start()
+
+    # Use asyncio to set up webhook
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(setup_webhook())
 
 if __name__ == "__main__":
-    # Set the webhook
-    setup_webhook()
-
-    # Run Flask server
-    port = int(os.environ.get("PORT", 3000))
-    app.run(host="0.0.0.0", port=port)
+    main()
