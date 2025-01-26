@@ -49,22 +49,16 @@ def home():
     return "Bot is running with webhooks!"
 
 @app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    """Handle incoming Telegram updates synchronously."""
+async def webhook():
+    """Handle incoming Telegram updates asynchronously."""
     try:
         # Log the incoming request payload
         incoming_data = request.get_json(force=True)
         logging.info(f"Incoming update: {incoming_data}")
 
-        # Initialize and start the application only once
-        if not hasattr(application, "_is_initialized") or not application._is_initialized:
-            asyncio.run(application.initialize())
-            asyncio.run(application.start())
-            application._is_initialized = True  # Custom flag to track initialization
-
         # Process the incoming update
         update = Update.de_json(incoming_data, application.bot)
-        asyncio.run(application.process_update(update))
+        await application.process_update(update)
 
         return "OK", 200
     except Exception as e:
@@ -72,12 +66,12 @@ def webhook():
         logging.error(f"Error processing webhook update: {e}", exc_info=True)
         return "Internal Server Error", 500
 
-
-
 async def setup_webhook():
     """Set up Telegram webhook asynchronously."""
     url = f"{WEBHOOK_URL}/{TOKEN}"
     try:
+        await application.initialize()
+        await application.start()
         await application.bot.set_webhook(url)
         logging.info(f"Webhook set to {url}")
     except Exception as e:
