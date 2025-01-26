@@ -49,12 +49,12 @@ def home():
     return "Bot is running with webhooks!"
 
 @app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    """Handle incoming Telegram updates synchronously."""
+async def webhook():
+    """Handle incoming Telegram updates asynchronously."""
     try:
-        # Use asyncio.run to process updates in a new event loop
+        logging.info(f"Incoming update: {request.get_json(force=True)}")
         update = Update.de_json(request.get_json(force=True), application.bot)
-        asyncio.run(application.process_update(update))
+        await application.process_update(update)
         return "OK", 200
     except Exception as e:
         logging.error(f"Error processing webhook update: {e}")
