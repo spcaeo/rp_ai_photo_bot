@@ -6,17 +6,14 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 load_dotenv()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Bot is running! Send /help for commands.')
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Available commands:\n/start - Start bot\n/help - Show commands')
+    await update.message.reply_text('Bot started!')
 
 def main():
-    application = Application.builder().token(os.getenv('TELEGRAM_TOKEN')).build()
+    token = os.getenv('TELEGRAM_TOKEN')
+    application = Application.builder().token(token).base_url("https://api.telegram.org/bot").build()
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    print("Bot started...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("Bot starting...")
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
     main()
