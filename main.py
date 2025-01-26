@@ -56,10 +56,11 @@ def webhook():
         incoming_data = request.get_json(force=True)
         logging.info(f"Incoming update: {incoming_data}")
 
-        # Initialize and start the application (if not already done)
-        if not application.is_running:
+        # Initialize and start the application only once
+        if not hasattr(application, "_is_initialized") or not application._is_initialized:
             asyncio.run(application.initialize())
             asyncio.run(application.start())
+            application._is_initialized = True  # Custom flag to track initialization
 
         # Process the incoming update
         update = Update.de_json(incoming_data, application.bot)
