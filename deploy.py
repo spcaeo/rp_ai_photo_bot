@@ -11,10 +11,16 @@ def git_and_deploy(files=None, commit_message=None, max_retries=3):
         # Git push
         if files:
             subprocess.run(['git', 'add'] + files, check=True)
-        if commit_message:
-            subprocess.run(['git', 'commit', '-m', commit_message], check=True)
-        subprocess.run(['git', 'push'], check=True)
-        print("✅ Git push successful")
+        
+        # Check for staged changes before committing
+        status = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
+        if status.stdout.strip():  # If there are changes
+            if commit_message:
+                subprocess.run(['git', 'commit', '-m', commit_message], check=True)
+            subprocess.run(['git', 'push'], check=True)
+            print("✅ Git push successful")
+        else:
+            print("⚠️  No changes to commit. Skipping commit and push.")
         
         retry_count = 0
         while retry_count < max_retries:
@@ -72,6 +78,7 @@ def git_and_deploy(files=None, commit_message=None, max_retries=3):
         
     except Exception as e:
         print(f"❌ Error: {e}")
+
 
 if __name__ == "__main__":
     git_and_deploy(['.env', 'deploy.py', 'notes.txt'], "Added detailed deployment logs and error tracking")
